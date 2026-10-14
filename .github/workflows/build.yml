@@ -1,8 +1,10 @@
-name: Build Android APK
+name: Build Android APK (Chaikhaneh)
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
   workflow_dispatch:
 
 jobs:
@@ -13,12 +15,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Extract Project Zip
-        run: |
-          sudo apt-get install -y unzip imagemagick
-          find . -maxdepth 1 -name "*.zip" -exec unzip -o {} +
-
-      - name: Setup Node.js
+      - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -29,6 +26,18 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Install System Graphics Utilities
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends unzip imagemagick librsvg2-bin
+
+      - name: Extract Project Zip If Exists
+        run: |
+          if ls *.zip 1> /dev/null 2>&1; then
+            echo "Found zip file in repository, extracting..."
+            unzip -o -q "*.zip" || true
+          fi
+
       - name: Install Dependencies & Build Web Project
         run: |
           npm install --legacy-peer-deps
@@ -37,36 +46,36 @@ jobs:
 
       - name: Configure Capacitor & Add Android Platform
         run: |
-          cat << 'EOF' > capacitor.config.json
+          cat << 'CONFEOF' > capacitor.config.json
           {
-            "appId": "com.chaikhaneh.bahman",
-            "appName": "چایخانه عمو بهمن",
+            "appId": "com.bahmaniran.chaikhaneh",
+            "appName": "چای خانه",
             "webDir": "dist",
             "bundledWebRuntime": false,
             "server": {
               "androidScheme": "https"
             }
           }
-          EOF
+          CONFEOF
           rm -rf android
-          ./node_modules/.bin/cap add android
-          ./node_modules/.bin/cap sync android
+          npx cap add android
+          npx cap sync android
 
-      - name: Set Persian App Name & Android Strings
+      - name: Set App Name & Persian Strings
         run: |
-          cat << 'EOF' > android/app/src/main/res/values/strings.xml
+          cat << 'STREOF' > android/app/src/main/res/values/strings.xml
           <?xml version='1.0' encoding='utf-8'?>
           <resources>
-              <string name="app_name">چایخانه عمو بهمن</string>
-              <string name="title_activity_main">چایخانه عمو بهمن</string>
-              <string name="package_name">com.chaikhaneh.bahman</string>
-              <string name="custom_url_scheme">com.chaikhaneh.bahman</string>
+              <string name="app_name">چای خانه</string>
+              <string name="title_activity_main">چای خانه</string>
+              <string name="package_name">com.bahmaniran.chaikhaneh</string>
+              <string name="custom_url_scheme">com.bahmaniran.chaikhaneh</string>
           </resources>
-          EOF
+          STREOF
 
-      - name: Clean & Secure AndroidManifest.xml (Fix Play Protect)
+      - name: Clean & Secure AndroidManifest.xml
         run: |
-          cat << 'EOF' > android/app/src/main/AndroidManifest.xml
+          cat << 'MANEOF' > android/app/src/main/AndroidManifest.xml
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
@@ -105,42 +114,94 @@ jobs:
                   </provider>
               </application>
 
-              <!-- Only standard network permission -->
               <uses-permission android:name="android.permission.INTERNET" />
           </manifest>
-          EOF
+          MANEOF
 
-      - name: Apply Custom Game Icon & Styling
+      - name: Generate Persian Teahouse App Icons
         run: |
-          ICON_FILE=$(find . -maxdepth 2 -name "icon.png" -o -name "icon.jpg" -o -name "icon.jpeg" -o -name "pwa-512x512.png" 2>/dev/null | head -n 1 || true)
-          if [ -z "$ICON_FILE" ]; then
-            echo "Creating fallback icon..."
-            convert -size 512x512 xc:'#0D3B3F' \
-              -fill '#D4AF37' -draw "circle 256,256 256,400" \
-              -fill '#7A1C1C' -draw "circle 256,256 256,380" \
-              /tmp/fallback_icon.png
-            ICON_FILE="/tmp/fallback_icon.png"
+          cat << 'SVGGEOF' > /tmp/tea_icon.svg
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+            <defs>
+              <radialGradient id="bgGrad" cx="50%" cy="45%" r="65%">
+                <stop offset="0%" stop-color="#4a1505"/>
+                <stop offset="60%" stop-color="#230b04"/>
+                <stop offset="100%" stop-color="#110402"/>
+              </radialGradient>
+              <linearGradient id="goldBorder" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#fde047"/>
+                <stop offset="50%" stop-color="#d97706"/>
+                <stop offset="100%" stop-color="#78350f"/>
+              </linearGradient>
+              <linearGradient id="teaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#fbbf24"/>
+                <stop offset="20%" stop-color="#d97706"/>
+                <stop offset="60%" stop-color="#991b1b"/>
+                <stop offset="100%" stop-color="#450a0a"/>
+              </linearGradient>
+            </defs>
+            <rect x="16" y="16" width="480" height="480" rx="105" fill="url(#bgGrad)"/>
+            <rect x="16" y="16" width="480" height="480" rx="105" fill="none" stroke="url(#goldBorder)" stroke-width="12" opacity="0.9"/>
+            <rect x="28" y="28" width="456" height="456" rx="93" fill="none" stroke="#fbbf24" stroke-width="2" opacity="0.4"/>
+            <!-- Ornate Golden Saucer -->
+            <ellipse cx="256" cy="375" rx="150" ry="32" fill="url(#goldBorder)"/>
+            <ellipse cx="256" cy="373" rx="144" ry="28" fill="#78350f"/>
+            <ellipse cx="256" cy="371" rx="136" ry="25" fill="#b45309"/>
+            <ellipse cx="256" cy="370" rx="120" ry="20" fill="#92400e" stroke="#fef08a" stroke-width="2" opacity="0.8"/>
+            <ellipse cx="256" cy="368" rx="80" ry="14" fill="#d97706"/>
+            <!-- Persian Waisted Tea Glass -->
+            <path d="M190 200 Q180 270 215 305 Q225 315 220 340 L292 340 Q287 315 297 305 Q332 270 322 200 Z" fill="url(#teaGrad)"/>
+            <ellipse cx="256" cy="205" rx="64" ry="13" fill="#f59e0b"/>
+            <ellipse cx="256" cy="204" rx="58" ry="10" fill="#fef08a"/>
+            <!-- Saffron Threads -->
+            <path d="M245 203 Q252 201 258 205" stroke="#991b1b" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+            <path d="M255 204 Q262 202 268 206" stroke="#b91c1c" stroke-width="2" stroke-linecap="round" fill="none"/>
+            <path d="M248 206 Q254 207 260 203" stroke="#7f1d1d" stroke-width="2" stroke-linecap="round" fill="none"/>
+            <!-- Glass Body -->
+            <path d="M186 185 Q176 270 213 310 Q225 322 216 350 Q216 356 226 358 L286 358 Q296 356 296 350 Q287 322 299 310 Q336 270 326 185 Z" fill="none" stroke="#fde68a" stroke-width="4" opacity="0.9"/>
+            <ellipse cx="256" cy="185" rx="70" ry="14" fill="none" stroke="#fef08a" stroke-width="4" opacity="0.9"/>
+            <ellipse cx="256" cy="185" rx="66" ry="12" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.6"/>
+            <ellipse cx="256" cy="358" rx="38" ry="9" fill="#d97706" stroke="#fde047" stroke-width="3" opacity="0.9"/>
+            <path d="M194 200 Q188 265 218 300" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+            <!-- Sugar Cube Beside Glass -->
+            <g transform="translate(355, 345)">
+              <ellipse cx="32" cy="42" rx="26" ry="9" fill="#000000" opacity="0.4"/>
+              <polygon points="28,10 52,18 32,28 8,20" fill="#ffffff"/>
+              <polygon points="52,18 52,40 32,50 32,28" fill="#cbd5e1"/>
+              <polygon points="8,20 32,28 32,50 8,42" fill="#f1f5f9"/>
+            </g>
+            <!-- Rising Steam -->
+            <path d="M245 170 Q235 140 252 115 Q265 95 250 70" fill="none" stroke="#fed7aa" stroke-width="5" stroke-linecap="round" opacity="0.6"/>
+            <path d="M265 175 Q280 145 268 120 Q258 95 272 75" fill="none" stroke="#fef08a" stroke-width="4" stroke-linecap="round" opacity="0.8"/>
+          </svg>
+          SVGGEOF
+
+          REPO_ICON=$(find . -maxdepth 2 -name "icon.png" -o -name "icon.jpg" -o -name "icon.jpeg" -o -name "pwa-512x512.png" 2>/dev/null | head -n 1 || true)
+          if [ -n "$REPO_ICON" ]; then
+            echo "Using icon found in repository: $REPO_ICON"
+            convert "$REPO_ICON" -resize 512x512 /tmp/master_icon.png
+          else
+            echo "Rendering high-res icon from Persian Tea Glass SVG..."
+            rsvg-convert -w 512 -h 512 /tmp/tea_icon.svg -o /tmp/master_icon.png
           fi
 
-          echo "Applying custom icon from: $ICON_FILE"
           for item in mdpi:48 hdpi:72 xhdpi:96 xxhdpi:144 xxxhdpi:192; do
             NAME=$(echo $item | cut -d: -f1)
             SIZE=$(echo $item | cut -d: -f2)
             mkdir -p android/app/src/main/res/mipmap-$NAME
-            convert "$ICON_FILE" -resize ${SIZE}x${SIZE}\! android/app/src/main/res/mipmap-$NAME/ic_launcher.png
-            convert "$ICON_FILE" -resize ${SIZE}x${SIZE}\! android/app/src/main/res/mipmap-$NAME/ic_launcher_round.png
+            convert /tmp/master_icon.png -resize ${SIZE}x${SIZE}\! android/app/src/main/res/mipmap-$NAME/ic_launcher.png
+            convert /tmp/master_icon.png -resize ${SIZE}x${SIZE}\! android/app/src/main/res/mipmap-$NAME/ic_launcher_round.png
           done
 
-          # Adaptive Icon Foregrounds
-          convert "$ICON_FILE" -resize 108x108\! android/app/src/main/res/mipmap-mdpi/ic_launcher_foreground.png
-          convert "$ICON_FILE" -resize 162x162\! android/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.png
-          convert "$ICON_FILE" -resize 216x216\! android/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.png
-          convert "$ICON_FILE" -resize 324x324\! android/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.png
-          convert "$ICON_FILE" -resize 432x432\! android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png
+          # Generate centered adaptive icons
+          convert /tmp/master_icon.png -resize 78x78 -gravity center -background none -extent 108x108 android/app/src/main/res/mipmap-mdpi/ic_launcher_foreground.png
+          convert /tmp/master_icon.png -resize 117x117 -gravity center -background none -extent 162x162 android/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.png
+          convert /tmp/master_icon.png -resize 156x156 -gravity center -background none -extent 216x216 android/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.png
+          convert /tmp/master_icon.png -resize 234x234 -gravity center -background none -extent 324x324 android/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.png
+          convert /tmp/master_icon.png -resize 312x312 -gravity center -background none -extent 432x432 android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png
 
-          # Persian Teahouse Turquoise Adaptive Background
           mkdir -p android/app/src/main/res/drawable
-          cat << 'EOF' > android/app/src/main/res/drawable/ic_launcher_background.xml
+          cat << 'DRWEOF' > android/app/src/main/res/drawable/ic_launcher_background.xml
           <?xml version="1.0" encoding="utf-8"?>
           <vector xmlns:android="http://schemas.android.com/apk/res/android"
               android:width="108dp"
@@ -148,10 +209,10 @@ jobs:
               android:viewportWidth="108"
               android:viewportHeight="108">
               <path
-                  android:fillColor="#0D3B3F"
+                  android:fillColor="#230b04"
                   android:pathData="M0,0h108v108h-108z"/>
           </vector>
-          EOF
+          DRWEOF
 
       - name: Generate Release Keystore & Configure Signing
         run: |
@@ -163,7 +224,7 @@ jobs:
             -validity 10000 \
             -storepass bahman123456 \
             -keypass bahman123456 \
-            -dname "CN=Bahman Bamzad, OU=Bahman Games, O=Chaikhaneh Bahman, L=Tehran, ST=Tehran, C=IR"
+            -dname "CN=Chaikhaneh, OU=Games, O=Chaikhaneh Iranian Games, L=Tehran, ST=Tehran, C=IR"
 
           python3 - << 'PYEOF'
           path = 'android/app/build.gradle'
@@ -202,14 +263,14 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleRelease assembleDebug --no-daemon -x lint -x test
 
-      - name: Upload Signed Release APK (Recommended for Installation)
+      - name: Upload Signed Release APK (Chaikhaneh)
         uses: actions/upload-artifact@v4
         with:
-          name: Chaikhaneh-Bahman-v1.1-Release-Signed
+          name: Chaikhaneh-Release-Final
           path: android/app/build/outputs/apk/release/app-release.apk
 
       - name: Upload Debug APK (Backup)
         uses: actions/upload-artifact@v4
         with:
-          name: Chaikhaneh-Bahman-v1.1-Debug
+          name: Chaikhaneh-Debug-Final
           path: android/app/build/outputs/apk/debug/app-debug.apk
