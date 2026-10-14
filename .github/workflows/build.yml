@@ -85,7 +85,7 @@ jobs:
                   android:label="@string/app_name"
                   android:roundIcon="@mipmap/ic_launcher_round"
                   android:supportsRtl="true"
-                  android:usesCleartextTraffic="false"
+                  android:usesCleartextTraffic="true"
                   android:theme="@style/AppTheme">
 
                   <activity
@@ -115,6 +115,7 @@ jobs:
               </application>
 
               <uses-permission android:name="android.permission.INTERNET" />
+              <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
           </manifest>
           MANEOF
 
@@ -143,34 +144,28 @@ jobs:
             <rect x="16" y="16" width="480" height="480" rx="105" fill="url(#bgGrad)"/>
             <rect x="16" y="16" width="480" height="480" rx="105" fill="none" stroke="url(#goldBorder)" stroke-width="12" opacity="0.9"/>
             <rect x="28" y="28" width="456" height="456" rx="93" fill="none" stroke="#fbbf24" stroke-width="2" opacity="0.4"/>
-            <!-- Ornate Golden Saucer -->
             <ellipse cx="256" cy="375" rx="150" ry="32" fill="url(#goldBorder)"/>
             <ellipse cx="256" cy="373" rx="144" ry="28" fill="#78350f"/>
             <ellipse cx="256" cy="371" rx="136" ry="25" fill="#b45309"/>
             <ellipse cx="256" cy="370" rx="120" ry="20" fill="#92400e" stroke="#fef08a" stroke-width="2" opacity="0.8"/>
             <ellipse cx="256" cy="368" rx="80" ry="14" fill="#d97706"/>
-            <!-- Persian Waisted Tea Glass -->
             <path d="M190 200 Q180 270 215 305 Q225 315 220 340 L292 340 Q287 315 297 305 Q332 270 322 200 Z" fill="url(#teaGrad)"/>
             <ellipse cx="256" cy="205" rx="64" ry="13" fill="#f59e0b"/>
             <ellipse cx="256" cy="204" rx="58" ry="10" fill="#fef08a"/>
-            <!-- Saffron Threads -->
             <path d="M245 203 Q252 201 258 205" stroke="#991b1b" stroke-width="2.5" stroke-linecap="round" fill="none"/>
             <path d="M255 204 Q262 202 268 206" stroke="#b91c1c" stroke-width="2" stroke-linecap="round" fill="none"/>
             <path d="M248 206 Q254 207 260 203" stroke="#7f1d1d" stroke-width="2" stroke-linecap="round" fill="none"/>
-            <!-- Glass Body -->
             <path d="M186 185 Q176 270 213 310 Q225 322 216 350 Q216 356 226 358 L286 358 Q296 356 296 350 Q287 322 299 310 Q336 270 326 185 Z" fill="none" stroke="#fde68a" stroke-width="4" opacity="0.9"/>
             <ellipse cx="256" cy="185" rx="70" ry="14" fill="none" stroke="#fef08a" stroke-width="4" opacity="0.9"/>
             <ellipse cx="256" cy="185" rx="66" ry="12" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.6"/>
             <ellipse cx="256" cy="358" rx="38" ry="9" fill="#d97706" stroke="#fde047" stroke-width="3" opacity="0.9"/>
             <path d="M194 200 Q188 265 218 300" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
-            <!-- Sugar Cube Beside Glass -->
             <g transform="translate(355, 345)">
               <ellipse cx="32" cy="42" rx="26" ry="9" fill="#000000" opacity="0.4"/>
               <polygon points="28,10 52,18 32,28 8,20" fill="#ffffff"/>
               <polygon points="52,18 52,40 32,50 32,28" fill="#cbd5e1"/>
               <polygon points="8,20 32,28 32,50 8,42" fill="#f1f5f9"/>
             </g>
-            <!-- Rising Steam -->
             <path d="M245 170 Q235 140 252 115 Q265 95 250 70" fill="none" stroke="#fed7aa" stroke-width="5" stroke-linecap="round" opacity="0.6"/>
             <path d="M265 175 Q280 145 268 120 Q258 95 272 75" fill="none" stroke="#fef08a" stroke-width="4" stroke-linecap="round" opacity="0.8"/>
           </svg>
@@ -193,7 +188,6 @@ jobs:
             convert /tmp/master_icon.png -resize ${SIZE}x${SIZE}\! android/app/src/main/res/mipmap-$NAME/ic_launcher_round.png
           done
 
-          # Generate centered adaptive icons
           convert /tmp/master_icon.png -resize 78x78 -gravity center -background none -extent 108x108 android/app/src/main/res/mipmap-mdpi/ic_launcher_foreground.png
           convert /tmp/master_icon.png -resize 117x117 -gravity center -background none -extent 162x162 android/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.png
           convert /tmp/master_icon.png -resize 156x156 -gravity center -background none -extent 216x216 android/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.png
