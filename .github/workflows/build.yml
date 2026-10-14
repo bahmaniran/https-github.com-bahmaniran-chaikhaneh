@@ -1,4 +1,5 @@
 name: Build Android APK
+
 on:
   push:
     branches: [ main ]
@@ -14,7 +15,9 @@ jobs:
       - name: Extract Project Zip
         run: |
           sudo apt-get install -y unzip
-          unzip -o "*.zip"
+          if ls *.zip 1> /dev/null 2>&1; then
+            unzip -o "*.zip"
+          fi
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -24,30 +27,28 @@ jobs:
       - name: Setup Java JDK
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
+          distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install Dependencies & Build Web
+      - name: Install Dependencies & Build Web Project
         run: |
           npm install
+          npm install --save @capacitor/core @capacitor/cli @capacitor/android
           npm run build
 
-      - name: Setup Capacitor Android
+      - name: Add and Sync Android Platform
         run: |
           npx cap add android || true
           npx cap sync android
 
-      - name: Build Debug APK with Gradle
+      - name: Build Android Debug APK
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug --stacktrace
+          ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: chaikhaneh-bahman-apk
+          name: Chaikhaneh-Bahman-v1.0-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
