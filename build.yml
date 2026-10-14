@@ -26,7 +26,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
 
       - name: Install Dependencies & Build Web Project
         run: |
@@ -34,13 +34,22 @@ jobs:
           npm install --save --legacy-peer-deps @capacitor/core @capacitor/cli @capacitor/android
           npm run build
 
-      - name: Configure and Sync Android Platform
+      - name: Configure Capacitor & Add Android Platform
         run: |
-          if [ ! -f "capacitor.config.ts" ] && [ ! -f "capacitor.config.json" ]; then
-            npx cap init "Chaikhaneh Bahman" "com.bahman.chaikhaneh" --web-dir dist
+          cat << 'EOF' > capacitor.config.json
+          {
+            "appId": "com.bahman.chaikhaneh",
+            "appName": "Chaikhaneh Bahman",
+            "webDir": "dist",
+            "server": {
+              "androidScheme": "https"
+            }
+          }
+          EOF
+          if [ ! -d "android" ]; then
+            ./node_modules/.bin/cap add android
           fi
-          npx cap add android || true
-          npx cap sync android
+          ./node_modules/.bin/cap sync android
 
       - name: Build Android Debug APK
         run: |
