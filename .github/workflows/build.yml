@@ -1,4 +1,4 @@
-name: Build Android APK (Chaikhaneh)
+name: Build Android APK (Chaikhaneh Live)
 
 on:
   push:
@@ -34,7 +34,6 @@ jobs:
       - name: Extract Project Zip If Exists
         run: |
           if ls *.zip 1> /dev/null 2>&1; then
-            echo "Found zip file in repository, extracting..."
             unzip -o -q "*.zip" || true
           fi
 
@@ -44,7 +43,7 @@ jobs:
           npm install --save --legacy-peer-deps @capacitor/core@^6.0.0 @capacitor/cli@^6.0.0 @capacitor/android@^6.0.0
           npm run build
 
-      - name: Configure Capacitor & Add Android Platform
+      - name: Configure Capacitor for Live Online Updates
         run: |
           cat << 'CONFEOF' > capacitor.config.json
           {
@@ -53,6 +52,8 @@ jobs:
             "webDir": "dist",
             "bundledWebRuntime": false,
             "server": {
+              "url": "https://ghurfe.ir/game",
+              "cleartext": true,
               "androidScheme": "https"
             }
           }
@@ -173,10 +174,8 @@ jobs:
 
           REPO_ICON=$(find . -maxdepth 2 -name "icon.png" -o -name "icon.jpg" -o -name "icon.jpeg" -o -name "pwa-512x512.png" 2>/dev/null | head -n 1 || true)
           if [ -n "$REPO_ICON" ]; then
-            echo "Using icon found in repository: $REPO_ICON"
             convert "$REPO_ICON" -resize 512x512 /tmp/master_icon.png
           else
-            echo "Rendering high-res icon from Persian Tea Glass SVG..."
             rsvg-convert -w 512 -h 512 /tmp/tea_icon.svg -o /tmp/master_icon.png
           fi
 
@@ -248,23 +247,16 @@ jobs:
 
           with open(path, 'w', encoding='utf-8') as f:
               f.write(content)
-          print("Successfully injected release signingConfig into build.gradle")
           PYEOF
 
-      - name: Build Signed Release & Debug APKs
+      - name: Build Signed Release APK
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleRelease assembleDebug --no-daemon -x lint -x test
+          ./gradlew assembleRelease --no-daemon -x lint -x test
 
-      - name: Upload Signed Release APK (Chaikhaneh)
+      - name: Upload Live Release APK
         uses: actions/upload-artifact@v4
         with:
-          name: Chaikhaneh-Release-Final
+          name: Chaikhaneh-Live-Release-Final
           path: android/app/build/outputs/apk/release/app-release.apk
-
-      - name: Upload Debug APK (Backup)
-        uses: actions/upload-artifact@v4
-        with:
-          name: Chaikhaneh-Debug-Final
-          path: android/app/build/outputs/apk/debug/app-debug.apk
